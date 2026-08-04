@@ -14,10 +14,10 @@ interface GuildInfo {
 }
 
 interface GeetestValidateResult {
-  lot_number: string;
-  captcha_output: string;
-  pass_token: string;
-  gen_time: string;
+  lot_number?: string;
+  captcha_output?: string;
+  pass_token?: string;
+  gen_time?: string;
 }
 
 interface GeetestInstance {
@@ -43,26 +43,48 @@ declare global {
 let geetestScriptPromise: Promise<void> | null = null;
 
 function loadGeetestScript(): Promise<void> {
-  if (window.initGeetest4) return Promise.resolve();
-  if (geetestScriptPromise) return geetestScriptPromise;
+  if (window.initGeetest4) {
+    console.log("[GeeTest] Script already loaded");
+    return Promise.resolve();
+  }
+  if (geetestScriptPromise) {
+    console.log("[GeeTest] Load in progress, reusing promise");
+    return geetestScriptPromise;
+  }
 
   geetestScriptPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>('script[data-geetest-v4="true"]');
-    if (existing) {
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error("GeeTest failed to load")), { once: true });
+    const existing = document.querySelector<HTMLScriptElement>('script[src*="geetest"]');
+    if (existing?.readyState === "loaded" || existing?.readyState === "complete") {
+      console.log("[GeeTest] Script tag exists and loaded");
+      resolve();
       return;
     }
 
+    console.log("[GeeTest] Creating new script tag");
     const script = document.createElement("script");
     script.src = "https://static.geetest.com/v4/gt4.js";
     script.async = true;
-    script.dataset.geetestV4 = "true";
-    script.onload = () => resolve();
-    script.onerror = () => {
+    script.defer = true;
+    script.charset = "utf-8";
+
+    const timeout = setTimeout(() => {
+      console.error("[GeeTest] Load timeout after 10s");
       geetestScriptPromise = null;
-      reject(new Error("GeeTest failed to load"));
+      reject(new Error("GeeTest script load timeout"));
+    }, 10_000);
+
+    script.onload = () => {
+      clearTimeout(timeout);
+      console.log("[GeeTest] Script loaded successfully, initGeetest4 available:", !!window.initGeetest4);
+      resolve();
     };
+    script.onerror = () => {
+      clearTimeout(timeout);
+      geetestScriptPromise = null;
+      console.error("[GeeTest] Script load failed (404, CORS, or network)");
+      reject(new Error("GeeTest script load failed (check CDN availability and CORS)"));
+    };
+
     document.head.appendChild(script);
   });
 
@@ -107,6 +129,7 @@ export default function HomePage() {
 
   const openCaptcha = async () => {
     try {
+      setError("");
       const configRes = await fetch("/api/captcha/config", { cache: "no-store" });
       const config = (await configRes.json()) as { enabled?: boolean; captchaId?: string; error?: string };
       if (!configRes.ok) throw new Error(config.error ?? "CAPTCHA is unavailable");
@@ -118,18 +141,28 @@ export default function HomePage() {
       if (!config.captchaId) throw new Error("CAPTCHA is not configured");
 
       await loadGeetestScript();
-      if (!window.initGeetest4) throw new Error("CAPTCHA failed to initialize");
+      if (!window.initGeetest4) throw new Error("GeeTest script failed to load");
 
+      // GeeTest v4: use 'popup' mode for auto-showing modal
+      // 'bind' mode requires manual trigger; 'popup' is simplest
       window.initGeetest4(
-        { captchaId: config.captchaId, product: "bind", language: "eng", riskType: "slide" },
+        {
+          captchaId: config.captchaId,
+          product: "popup", // Auto-popup on success callback
+          language: "eng",
+          riskType: "slide",
+        },
         (captcha) => {
           captchaRef.current?.destroy();
           captchaRef.current = captcha;
+
           captcha
-            .onReady(() => captcha.showCaptcha())
+            .onReady(() => {
+              // onReady fires when iframe ready; popup mode auto-shows now
+            })
             .onSuccess(() => {
               const proof = captcha.getValidate();
-              if (!proof) {
+              if (!proof || !proof.lot_number) {
                 setError("CAPTCHA verification failed. Please try again.");
                 captcha.reset();
                 setLoading(false);
@@ -138,14 +171,19 @@ export default function HomePage() {
               void createSession(proof);
             })
             .onError(() => {
-              setError("CAPTCHA could not load. Please check your connection and retry.");
+              setError("CAPTCHA error. Please check your network and try again.");
+              captcha.reset();
               setLoading(false);
             })
-            .onClose(() => setLoading(false));
+            .onClose(() => {
+              if (!loading) setLoading(false); // onClose fires after user interaction
+            });
         }
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "CAPTCHA is temporarily unavailable");
+      const msg = err instanceof Error ? err.message : "CAPTCHA is temporarily unavailable";
+      setError(msg);
+      console.error("[CAPTCHA Error]", msg);
       setLoading(false);
     }
   };
@@ -155,11 +193,13 @@ export default function HomePage() {
     setError("");
     setGuildInfo(null);
 
-    if (!/^[0-9]{17,19}$/.test(guildId.trim())) {
+    const trimmedId = guildId.trim();
+    if (!/^[0-9]{17,19}$/.test(trimmedId)) {
       setError("Guild ID must be 17-19 digits");
       return;
     }
 
+    console.log("[Guild Setup] Guild ID valid, opening CAPTCHA...");
     setLoading(true);
     await openCaptcha();
   };

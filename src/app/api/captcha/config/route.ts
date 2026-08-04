@@ -7,13 +7,19 @@ export async function GET() {
   const enabled = isCaptchaEnabled();
 
   try {
-    return NextResponse.json(
-      { enabled, captchaId: enabled ? getGeetestCaptchaId() : null },
-      { headers: { "Cache-Control": "no-store" } }
+    const captchaId = enabled ? getGeetestCaptchaId() : null;
+    const response = NextResponse.json(
+      { enabled, captchaId },
+      { status: 200, headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } }
     );
-  } catch {
+    // Add CORS headers if needed
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    response.headers.set("Content-Type", "application/json; charset=utf-8");
+    return response;
+  } catch (err) {
+    console.error("[CAPTCHA Config Error]", err instanceof Error ? err.message : String(err));
     return NextResponse.json(
-      { error: "CAPTCHA is temporarily unavailable" },
+      { enabled: false, captchaId: null, error: "CAPTCHA temporarily unavailable" },
       { status: 503, headers: { "Cache-Control": "no-store" } }
     );
   }
