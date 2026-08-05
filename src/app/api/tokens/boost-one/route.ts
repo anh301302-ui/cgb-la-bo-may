@@ -34,8 +34,7 @@ export async function POST(req: NextRequest) {
 
   // Layer 1: up to 8 calls per session (matches the 8-token batch cap; the
   // window equals the session's own 1h JWT lifetime).
-  // SECURITY: checkRateLimit now uses Vercel KV for distributed rate limiting
-  const sessionLimit = await checkRateLimit(session.nonce, "tokens/boost-one");
+  const sessionLimit = checkRateLimit(session.nonce, "tokens/boost-one");
   if (!sessionLimit.allowed) {
     return NextResponse.json(
       { error: "Boost limit reached for this session (max 8 tokens). Start a new session to continue." },
@@ -45,8 +44,7 @@ export async function POST(req: NextRequest) {
 
   // Layer 2: IP-wide daily ceiling — prevents bypassing Layer 1 by simply
   // re-verifying the server to mint a fresh session repeatedly.
-  // SECURITY: Enforced globally via Vercel KV (prevents VPN/proxy bypass)
-  const dailyLimit = await checkRateLimit(ip, "tokens/boost-daily");
+  const dailyLimit = checkRateLimit(ip, "tokens/boost-daily");
   if (!dailyLimit.allowed) {
     return NextResponse.json(
       { error: "Daily boost limit reached for this network. Please try again tomorrow." },

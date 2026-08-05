@@ -11,9 +11,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Session expired. Please start over." }, { status: 401 });
   }
 
-  // Rate limit by session guild + IP (SECURITY: uses Vercel KV for distributed limiting)
+  // Rate limit by session guild + IP
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
-  const rl = await checkRateLimit(`${session.guildId}:${ip}`, "tokens/validate");
+  const rl = checkRateLimit(`${session.guildId}:${ip}`, "tokens/validate");
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Too many validation requests. Please wait." },

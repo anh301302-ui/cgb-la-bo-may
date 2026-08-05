@@ -1,11 +1,6 @@
 /**
- * Rate Limiting with Vercel KV Support
- * 
- * SECURITY IMPROVEMENTS:
- * - Vercel KV (Redis) backend for distributed rate limiting
- * - Prevents bypass via VPN/proxy by enforcing globally, not per-instance
- * - Fallback to in-memory if KV unavailable (graceful degradation)
- * - Per-instance in-memory limits to catch local abuse patterns
+ * Rate Limiting with In-Memory Storage
+ * Simple, synchronous rate limiting that works on Vercel serverless
  */
 
 interface RateLimitEntry {
@@ -13,27 +8,8 @@ interface RateLimitEntry {
   resetAt: number;
 }
 
-// In-memory store (per-instance, for defense-in-depth)
-// Note: This resets on cold start, which is OK because:
-// 1. It's a secondary check on top of Vercel KV
-// 2. Cold starts are infrequent (~minutes apart in production)
-// 3. Vercel KV provides the main distributed check
+// In-memory store (resets per serverless instance)
 const store = new Map<string, RateLimitEntry>();
-
-// Track if KV is available (set on first successful use)
-let kvAvailable: boolean | null = null;
-
-// Import Vercel KV (optional dependency)
-let kv: any = null;
-try {
-  // Only import if env var is set (indicates Vercel KV is connected)
-  if (process.env.KV_URL) {
-    kv = require("@vercel/kv").kv;
-  }
-} catch {
-  // KV not available (local dev, or not installed)
-  kv = null;
-}
 
 // Tracks the last call timestamp per key, for minimum-interval enforcement
 // (defense-in-depth so a script can't bypass the client's 7s pacing and
@@ -66,10 +42,10 @@ const LIMITS: Record<string, RateLimitConfig> = {
  * - If KV unavailable: falls back to in-memory (graceful, no hard failures)
  * - Always checks in-memory first (faster, defense-in-depth)
  */
-export async function checkRateLimit(
+export function checkRateLimit(
   key: string,
   endpoint: keyof typeof LIMITS | string
-): Promise<{ allowed: boolean; remaining: number; resetIn: number }> {
+): { allowed: boolean; remaining: number; resetIn: number } {
   const config = LIMITS[endpoint] ?? { max: 20, windowMs: 60 * 1000 };
   const now = Date.now();
   const storeKey = `${endpoint}:${key}`;
