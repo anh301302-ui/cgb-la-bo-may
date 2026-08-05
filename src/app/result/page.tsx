@@ -77,41 +77,10 @@ export default function ResultPage() {
   const stoppedRef = useRef(false); // flips true if the user navigates away mid-run
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (hasStarted.current) return;
-    hasStarted.current = true;
-
-    const configRaw = sessionStorage.getItem("boostConfig");
-    if (!configRaw) {
-      router.replace("/");
-      return;
-    }
-
-    let config: BoostConfig;
-    try {
-      config = JSON.parse(configRaw);
-    } catch {
-      router.replace("/");
-      return;
-    }
-
-    setGuildName(config.guildName ?? "Server");
-    sessionStorage.removeItem("boostConfig");
-    runSequentially(config);
-
-    return () => {
-      // If the component unmounts (user navigates away / closes tab), stop
-      // scheduling further /api/tokens/boost-one calls. Any in-flight call
-      // still completes on the server, but no NEW token will be submitted.
-      stoppedRef.current = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [liveLog]);
-
+  // Declared BEFORE the mount effect that invokes them. Previously these
+  // lived below the effect, so the call site referenced a `const` that was
+  // still in its temporal dead zone at module-evaluation order — it only
+  // worked by accident because effects run after the component body.
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   const runSequentially = async (config: BoostConfig) => {
@@ -223,6 +192,42 @@ export default function ResultPage() {
     }));
     setLiveLog((prev) => [...prev, ...entries]);
   };
+
+  useEffect(() => {
+    if (hasStarted.current) return;
+    hasStarted.current = true;
+
+    const configRaw = sessionStorage.getItem("boostConfig");
+    if (!configRaw) {
+      router.replace("/");
+      return;
+    }
+
+    let config: BoostConfig;
+    try {
+      config = JSON.parse(configRaw);
+    } catch {
+      router.replace("/");
+      return;
+    }
+
+    setGuildName(config.guildName ?? "Server");
+    sessionStorage.removeItem("boostConfig");
+    runSequentially(config);
+
+    return () => {
+      // If the component unmounts (user navigates away / closes tab), stop
+      // scheduling further /api/tokens/boost-one calls. Any in-flight call
+      // still completes on the server, but no NEW token will be submitted.
+      stoppedRef.current = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [liveLog]);
+
 
   const progress = total > 0 ? Math.round((results.length / total) * 100) : 0;
 

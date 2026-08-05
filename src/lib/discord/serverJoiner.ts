@@ -32,6 +32,39 @@ interface JoinResult {
 }
 
 /**
+ * Read a required environment variable.
+ *
+ * Previously these were read with non-null assertions (`process.env.X!`). When
+ * the variable was actually missing, `undefined` was interpolated straight into
+ * a URL or an Authorization header and the user saw a meaningless Discord error
+ * ("401", "invalid client_id") instead of being told the deployment is
+ * misconfigured. Failing loudly here keeps the cause obvious.
+ */
+class MissingConfigError extends Error {
+  constructor(name: string) {
+    super(`Server is not fully configured (missing ${name}). Please contact the administrator.`);
+    this.name = "MissingConfigError";
+  }
+}
+
+function requireEnv(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) throw new MissingConfigError(name);
+  return value;
+}
+
+/** Fetch with a hard timeout so a hung Discord call can't stall the function. */
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 15_000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Build the base64-encoded X-Super-Properties header Discord uses to
  * fingerprint the requesting client. Mirrors the structure discord.js-selfbot-v13
  * sends by default (os/browser/version/build fields) so the authorize
@@ -84,8 +117,8 @@ function browserLikeHeaders(userToken: string, referer: string): Record<string, 
  * Referer header and as the source of query params re-sent in the body).
  */
 export function buildOAuth2URL(): string {
-  const clientId = process.env.OAUTH2_CLIENT_ID!;
-  const redirectUri = encodeURIComponent(process.env.OAUTH2_REDIRECT_URI!);
+  const clientId = requireEnv("OAUTH2_CLIENT_ID");
+  const redirectUri = encodeURIComponent(requireEnv("OAUTH2_REDIRECT_URI"));
   return (
     `https://discord.com/oauth2/authorize` +
     `?client_id=${clientId}` +
@@ -185,14 +218,14 @@ export async function exchangeCodeForAccessToken(
 ): Promise<{ accessToken: string | null; error?: string }> {
   try {
     const params = new URLSearchParams({
-      client_id: process.env.OAUTH2_CLIENT_ID!,
-      client_secret: process.env.OAUTH2_CLIENT_SECRET!,
+      client_id: requireEnv("OAUTH2_CLIENT_ID"),
+      client_secret: requireEnv("OAUTH2_CLIENT_SECRET"),
       grant_type: "authorization_code",
       code,
-      redirect_uri: process.env.OAUTH2_REDIRECT_URI!,
+      redirect_uri: requireEnv("OAUTH2_REDIRECT_URI"),
     });
 
-    const res = await fetch(`${DISCORD_API}/oauth2/token`, {
+    const res = await fetchWithTimeout(`${DISCORD_API}/oauth2/token`, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params.toString(),
@@ -204,9 +237,17 @@ export async function exchangeCodeForAccessToken(
       return { accessToken: null, error: "Authorization failed. Please try again." };
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as { access_token?: string };
+    if (!data.access_token) {
+      return { accessToken: null, error: "Authorization failed. Please try again." };
+    }
     return { accessToken: data.access_token };
   } catch (err: unknown) {
+    // A missing env var is a deployment problem, not a user problem — surface
+    // it verbatim so the operator can act on it.
+    if (err instanceof MissingConfigError) {
+      return { accessToken: null, error: err.message };
+    }
     // SECURITY: Log error context only, not the full error
     console.error(`[serverJoiner] Token exchange error`);
     return {
@@ -226,9 +267,9 @@ export async function addMemberToGuild(
   accessToken: string
 ): Promise<JoinResult> {
   try {
-    const botToken = process.env.BOT_TOKEN!;
+    const botToken = requireEnv("BOT_TOKEN");
 
-    const res = await fetch(`${DISCORD_API}/guilds/${guildId}/members/${userId}`, {
+    const res = await fetchWithTimeout(`${DISCORD_API}/guilds/${guildId}/members/${userId}`, {
       method: "PUT",
       headers: {
         Authorization: `Bot ${botToken}`,
@@ -239,17 +280,60 @@ export async function addMemberToGuild(
 
     if (res.status === 201) {
       return { success: true, alreadyMember: false };
-    } else if (res.status === 204) {
-      return { success: true, alreadyMember: true };
-    } else {
-      const errText = await res.text().catch(() => "");
-      return { success: false, error: `Failed to add member: HTTP ${res.status} ${errText}` };
     }
+    if (res.status === 204) {
+      return { success: true, alreadyMember: true };
+    }
+
+    // Discord asks us to back off; one retry keeps a busy batch moving instead
+    // of failing an otherwise-good token.
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const waitMs = Math.min((Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 3) * 1000, 10_000);
+      await new Promise((r) => setTimeout(r, waitMs));
+
+      const retry = await fetchWithTimeout(`${DISCORD_API}/guilds/${guildId}/members/${userId}`, {
+        method: "PUT",
+        headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ access_token: accessToken }),
+      });
+      if (retry.status === 201) return { success: true, alreadyMember: false };
+      if (retry.status === 204) return { success: true, alreadyMember: true };
+      return { success: false, error: describeAddMemberFailure(retry.status) };
+    }
+
+    // SECURITY: never echo Discord's raw response body back to the client.
+    return { success: false, error: describeAddMemberFailure(res.status) };
   } catch (err: unknown) {
-    return {
-      success: false,
-      error: err instanceof Error ? err.message : "Failed to add member to guild",
-    };
+    if (err instanceof MissingConfigError) {
+      return { success: false, error: err.message };
+    }
+    if (err instanceof Error && err.name === "AbortError") {
+      return { success: false, error: "Discord did not respond in time. Please try this token again." };
+    }
+    return { success: false, error: "Failed to add the account to the server. Please try again." };
+  }
+}
+
+/**
+ * Turn an Add-Guild-Member status code into an actionable, user-safe message.
+ * The most common real-world failure is 403: the bot was invited without
+ * CREATE_INSTANT_INVITE, so Discord refuses the call.
+ */
+function describeAddMemberFailure(status: number): string {
+  switch (status) {
+    case 400:
+      return "Discord rejected the request for this account.";
+    case 401:
+      return "The bot token is invalid or was reset. Please contact the administrator.";
+    case 403:
+      return "The bot lacks permission to add members. Re-invite it with the 'Create Invite' permission.";
+    case 404:
+      return "Server not found. Make sure the bot is still in the server.";
+    default:
+      return status >= 500
+        ? "Discord is having problems right now. Please try again shortly."
+        : "Failed to add the account to the server. Please try again.";
   }
 }
 

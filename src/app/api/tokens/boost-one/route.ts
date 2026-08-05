@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   const sessionLimit = checkRateLimit(session.nonce, "tokens/boost-one");
   if (!sessionLimit.allowed) {
     return NextResponse.json(
-      { error: "Boost limit reached for this session (max 8 tokens). Start a new session to continue." },
+      { error: "Boost limit reached for this session. Start a new session to continue." },
       { status: 429, headers: getRateLimitHeaders(sessionLimit) }
     );
   }
@@ -52,10 +52,11 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Defense-in-depth: reject calls faster than 3s apart for the same
-  // session — the UI paces itself at 7s, so anything faster indicates a
-  // direct script call bypassing the intended throttling.
-  if (!checkMinInterval(`boost-one:${session.nonce}`, 3000)) {
+  // Defense-in-depth: reject calls arriving faster than 1.5s apart for the same
+  // session. The UI paces itself at ~7s, so this only ever fires for direct
+  // scripted calls — the previous 3s floor was close enough to normal timing
+  // jitter that a user clicking "retry" promptly could trip it.
+  if (!checkMinInterval(`boost-one:${session.nonce}`, 1500)) {
     return NextResponse.json(
       { error: "Requests are arriving too quickly. Please slow down." },
       { status: 429 }
@@ -93,10 +94,15 @@ export async function POST(req: NextRequest) {
     boostCount: 0,
   };
 
-  stage("checking", "Checking membership status");
+  stage("checking", "Preparing account");
 
   try {
-    stage("joining", "Token not in server — adding");
+    // The OAuth2 add-member call is idempotent: Discord answers 201 when the
+    // user was newly added and 204 when they were already a member, so we do
+    // not need (and previously did not actually perform) a separate membership
+    // probe. The old "Token not in server — adding" copy claimed a check that
+    // never happened and confused users whose accounts were already members.
+    stage("joining", "Adding account to server");
     const joinResult = await joinServerWithToken(token, userId, guildId);
 
     if (!joinResult.success) {

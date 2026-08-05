@@ -3,8 +3,8 @@
     "src/app/api/tokens/validate/route.ts": {
       "maxDuration": 120
     },
-    "src/app/api/tokens/boost/route.ts": {
-      "maxDuration": 300
+    "src/app/api/tokens/boost-one/route.ts": {
+      "maxDuration": 60
     }
   },
   "crons": [

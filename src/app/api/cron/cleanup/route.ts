@@ -1,5 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import { resetRateLimitStore } from "@/lib/security/rateLimit";
+
+/**
+ * Constant-time string comparison. A plain `!==` on a secret leaks information
+ * through timing: the comparison bails at the first differing byte, so an
+ * attacker can recover the secret byte-by-byte by measuring response latency.
+ */
+function safeEquals(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) return false;
+  return timingSafeEqual(bufA, bufB);
+}
 
 /**
  * Daily cleanup cron — invoked automatically by Vercel Cron (see vercel.json).
@@ -11,10 +24,10 @@ import { resetRateLimitStore } from "@/lib/security/rateLimit";
  * correctness.
  */
 export async function GET(req: NextRequest) {
+  const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
-  const expected = `Bearer ${process.env.CRON_SECRET}`;
 
-  if (!process.env.CRON_SECRET || authHeader !== expected) {
+  if (!cronSecret || !authHeader || !safeEquals(authHeader, `Bearer ${cronSecret}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

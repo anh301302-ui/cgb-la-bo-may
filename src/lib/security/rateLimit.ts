@@ -19,12 +19,22 @@ interface RateLimitConfig {
   windowMs: number;
 }
 
+/**
+ * Limits are deliberately tuned to stop scripted abuse WITHOUT tripping on
+ * ordinary use. The previous values were far too tight: 3 validations per hour
+ * meant a user who mistyped a token twice was locked out for an hour, and an
+ * 8-call boost ceiling exactly equalled the batch size, so retrying a single
+ * failed token was impossible. Both produced "the site is broken" reports.
+ *
+ * Note that several users can share one public IP (carrier NAT, offices,
+ * campuses), so IP-scoped ceilings are set well above what one person needs.
+ */
 const LIMITS: Record<string, RateLimitConfig> = {
-  "session/create": { max: 5, windowMs: 15 * 60 * 1000 }, // 5/15min per IP
-  "tokens/validate": { max: 3, windowMs: 60 * 60 * 1000 }, // 3/hour per session
-  "tokens/boost-one": { max: 8, windowMs: 60 * 60 * 1000 }, // 8 calls / session / 1h
-  "tokens/boost-daily": { max: 32, windowMs: 24 * 60 * 60 * 1000 }, // 32 calls / IP / 24h
-  "bot/check": { max: 30, windowMs: 5 * 60 * 1000 }, // 30/5min per session
+  "session/create": { max: 15, windowMs: 15 * 60 * 1000 }, // 15/15min per IP
+  "tokens/validate": { max: 20, windowMs: 60 * 60 * 1000 }, // 20/hour per session+IP
+  "tokens/boost-one": { max: 24, windowMs: 60 * 60 * 1000 }, // 8-token batch + retries
+  "tokens/boost-daily": { max: 100, windowMs: 24 * 60 * 60 * 1000 }, // 100 calls / IP / 24h
+  "bot/check": { max: 60, windowMs: 5 * 60 * 1000 }, // polled by the setup screen
 };
 
 /**

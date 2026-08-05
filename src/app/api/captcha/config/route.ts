@@ -12,8 +12,9 @@ export async function GET() {
       { enabled, captchaId },
       { status: 200, headers: { "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0" } }
     );
-    // Add CORS headers if needed
-    response.headers.set("Access-Control-Allow-Origin", "*");
+    // NOTE: no wildcard CORS here. This endpoint is only consumed by our own
+    // first-party frontend, so `Access-Control-Allow-Origin: *` bought nothing
+    // and needlessly let any third-party site read our CAPTCHA configuration.
     response.headers.set("Content-Type", "application/json; charset=utf-8");
     return response;
   } catch (err) {

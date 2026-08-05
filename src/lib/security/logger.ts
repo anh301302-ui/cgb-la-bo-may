@@ -15,10 +15,12 @@ export function redactToken(str: string | undefined): string {
 /**
  * Redact OAuth2/sensitive data from objects before logging
  */
-export function sanitizeForLogging(obj: any): any {
+export function sanitizeForLogging(obj: unknown): unknown {
   if (!obj || typeof obj !== "object") return obj;
 
-  const clean = Array.isArray(obj) ? [...obj] : { ...obj };
+  const clean: Record<string, unknown> = Array.isArray(obj)
+    ? ({ ...obj } as Record<string, unknown>)
+    : { ...(obj as Record<string, unknown>) };
 
   // Token fields to redact
   const tokenFields = ["token", "userToken", "accessToken", "code", "refresh_token"];
@@ -26,8 +28,9 @@ export function sanitizeForLogging(obj: any): any {
   const secretFields = ["client_secret", "JWT_SECRET"];
 
   for (const field of tokenFields) {
-    if (field in clean && typeof clean[field] === "string") {
-      clean[field] = redactToken(clean[field]);
+    const value = clean[field];
+    if (typeof value === "string") {
+      clean[field] = redactToken(value);
     }
   }
 
@@ -37,13 +40,13 @@ export function sanitizeForLogging(obj: any): any {
     }
   }
 
-  return clean;
+  return Array.isArray(obj) ? Object.values(clean) : clean;
 }
 
 /**
  * Safely stringify an object for logging (redacts sensitive fields)
  */
-export function safeStringify(obj: any): string {
+export function safeStringify(obj: unknown): string {
   try {
     return JSON.stringify(sanitizeForLogging(obj));
   } catch {
@@ -57,7 +60,7 @@ export function safeStringify(obj: any): string {
 export function logSecure(
   context: string,
   message: string,
-  data?: any,
+  data?: unknown,
   level: "log" | "error" | "warn" = "log"
 ) {
   const timestamp = new Date().toISOString();

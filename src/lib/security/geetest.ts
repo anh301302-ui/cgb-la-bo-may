@@ -3,13 +3,14 @@ import { z } from "zod";
 
 const GEETEST_VALIDATE_URL = "https://gcaptcha4.geetest.com/validate";
 
+// All four fields are REQUIRED by the GeeTest v4 server-side validate API.
+// Keeping them non-optional lets TypeScript narrow them to `string` after a
+// successful parse (no `string | undefined` leaking into createHmac/URLSearchParams).
 export const GeetestResultSchema = z.object({
-  lot_number: z.string().min(1).max(128).optional(),
-  captcha_output: z.string().min(1).max(4096).optional(),
-  pass_token: z.string().min(1).max(512).optional(),
-  gen_time: z.string().regex(/^\d{1,20}$/).optional(),
-}).refine((obj) => obj.lot_number && obj.captcha_output && obj.pass_token && obj.gen_time, {
-  message: "Missing required GeeTest validation fields",
+  lot_number: z.string().min(1).max(128),
+  captcha_output: z.string().min(1).max(4096),
+  pass_token: z.string().min(1).max(512),
+  gen_time: z.string().regex(/^\d{1,20}$/),
 });
 
 export type GeetestResult = z.infer<typeof GeetestResultSchema>;
