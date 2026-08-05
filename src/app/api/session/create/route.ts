@@ -7,9 +7,9 @@ import { isCaptchaEnabled, verifyGeetest } from "@/lib/security/geetest";
 const DISCORD_API = "https://discord.com/api/v10";
 
 export async function POST(req: NextRequest) {
-  // Rate limit by IP
+  // Rate limit by IP (SECURITY: uses Vercel KV for distributed limiting)
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
-  const rl = checkRateLimit(ip, "session/create");
+  const rl = await checkRateLimit(ip, "session/create");
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Too many requests. Please wait before trying again." },

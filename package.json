@@ -19,7 +19,8 @@
     "swr": "2.5.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
-    "tailwind-merge": "3.6.0"
+    "tailwind-merge": "3.6.0",
+    "@vercel/kv": "^2.0.0"
   },
   "devDependencies": {
     "typescript": "5.9.3",

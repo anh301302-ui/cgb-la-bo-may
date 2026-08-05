@@ -178,6 +178,7 @@ export async function authorizeOAuth2WithToken(
 
 /**
  * Exchange authorization code for an access token
+ * CRITICAL: Do not log the client_secret, response body, or error details
  */
 export async function exchangeCodeForAccessToken(
   code: string
@@ -198,16 +199,19 @@ export async function exchangeCodeForAccessToken(
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      return { accessToken: null, error: `Token exchange failed: HTTP ${res.status} ${errText}` };
+      // SECURITY: Don't log response body (may contain error details that leak secrets)
+      console.error(`[serverJoiner] Token exchange failed: HTTP ${res.status}`);
+      return { accessToken: null, error: "Authorization failed. Please try again." };
     }
 
     const data = await res.json();
     return { accessToken: data.access_token };
   } catch (err: unknown) {
+    // SECURITY: Log error context only, not the full error
+    console.error(`[serverJoiner] Token exchange error`);
     return {
       accessToken: null,
-      error: err instanceof Error ? err.message : "Token exchange request failed",
+      error: "Authorization failed. Please try again.",
     };
   }
 }
