@@ -1,7 +1,14 @@
 node_modules/
 .next/
-.env.local
-.env*.local
+
+# Environment files — NEVER commit these.
+# Previously only `.env.local` was ignored, so a plain `.env` holding the real
+# BOT_TOKEN / OAUTH2_CLIENT_SECRET / GEETEST_KEY would have been committed by
+# `git add -A`. Only `.env.example` (placeholders) is allowed through.
+.env
+.env.*
+!.env.example
+
 *.log
 dist/
 .DS_Store
