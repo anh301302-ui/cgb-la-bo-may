@@ -6,28 +6,6 @@
 
 ---
 
-## ✨ Tính Năng
-
-✅ **Thêm Token Tự Động** - Thêm Discord token vào server chỉ với URL  
-✅ **Boost Server** - Tăng boost cho server sau khi thêm token  
-✅ **Xác Thực CAPTCHA** - GeeTest v4 protection chống bot  
-✅ **Đa Giao Thức** - OAuth2 + User token support  
-✅ **Giới Hạn Rate** - Tự động chống spam/abuse  
-✅ **Ghi Nhật Ký Bảo Mật** - Không log token hoặc secret  
-✅ **Phòng CSRF** - Origin validation trên tất cả mutations  
-
----
-
-## 🔒 Security Features
-
-- 🔐 **Token Redaction** - Discord tokens tự động ẩn trong logs
-- 🔐 **OAuth2 Protection** - Client secrets không bao giờ lộ
-- 🔐 **Distributed Rate Limiting** - Vercel KV chống VPN/proxy bypass
-- 🔐 **CSRF Protection** - Origin header validation trên tất cả mutations
-- 🔐 **Graceful Fallback** - Hoạt động bình thường nếu KV không sẵn có
-
----
-
 ## 🛠️ Stack Công Nghệ
 
 - **Framework**: Next.js 16 (App Router)
