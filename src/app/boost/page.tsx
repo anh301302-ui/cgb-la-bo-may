@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Stepper } from "@/components/Stepper";
 import { Logo } from "@/components/Logo";
+import HistoryButton from "@/components/HistoryButton"; // 👈 THÊM DÒNG NÀY
 
 interface ValidToken {
   token: string;
@@ -261,6 +262,9 @@ export default function BoostPage() {
           </div>
         </div>
       </div>
+      
+      {/* 👇 THÊM DÒNG NÀY ĐỂ HIỆN NÚT LỊCH SỬ Ở GÓC PHẢI */}
+      <HistoryButton />
     </div>
   );
 }
