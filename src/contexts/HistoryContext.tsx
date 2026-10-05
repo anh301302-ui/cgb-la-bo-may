@@ -1,0 +1,88 @@
+// src/contexts/HistoryContext.tsx
+"use client";
+
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+
+// Định nghĩa cấu trúc của một mục lịch sử
+export interface HistoryItem {
+  id: string;
+  serverId: string;
+  boosts: number;
+  boosted: number;
+  existing: number;
+  failed: number;
+  date: string;
+}
+
+interface HistoryContextType {
+  history: HistoryItem[];
+  addHistory: (item: Omit<HistoryItem, 'id'>) => void;
+  clearHistory: () => void;
+}
+
+const HistoryContext = createContext<HistoryContextType | undefined>(undefined);
+
+const HISTORY_KEY = 'boost_history';
+const MAX_HISTORY_ITEMS = 500; // Giới hạn tối đa 500 mục lịch sử
+
+export function HistoryProvider({ children }: { children: ReactNode }) {
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+
+  // Tải lịch sử từ localStorage khi component được mount
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem(HISTORY_KEY);
+      if (savedHistory) {
+        setHistory(JSON.parse(savedHistory));
+      }
+    } catch (error) {
+      console.error("Không thể tải lịch sử từ localStorage:", error);
+    }
+  }, []);
+
+  // Hàm thêm một mục lịch sử mới
+  const addHistory = (item: Omit<HistoryItem, 'id'>) => {
+    const newItem: HistoryItem = {
+      ...item,
+      id: new Date().toISOString() + Math.random().toString(36).substring(2, 9),
+    };
+
+    setHistory(prevHistory => {
+      const updatedHistory = [newItem, ...prevHistory];
+      const trimmedHistory = updatedHistory.slice(0, MAX_HISTORY_ITEMS);
+      
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmedHistory));
+      } catch (error) {
+        console.error("Không thể lưu lịch sử vào localStorage:", error);
+      }
+      
+      return trimmedHistory;
+    });
+  };
+
+  // Hàm xóa toàn bộ lịch sử
+  const clearHistory = () => {
+    setHistory([]);
+    try {
+      localStorage.removeItem(HISTORY_KEY);
+    } catch (error) {
+      console.error("Không thể xóa lịch sử:", error);
+    }
+  };
+
+  return (
+    <HistoryContext.Provider value={{ history, addHistory, clearHistory }}>
+      {children}
+    </HistoryContext.Provider>
+  );
+}
+
+// Hook để sử dụng HistoryContext
+export function useHistory() {
+  const context = useContext(HistoryContext);
+  if (context === undefined) {
+    throw new Error('useHistory phải được sử dụng bên trong HistoryProvider');
+  }
+  return context;
+}
