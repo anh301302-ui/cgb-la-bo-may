@@ -246,114 +246,137 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6">
-      <nav className="fixed top-0 left-0 right-0 flex items-center justify-center gap-6 sm:gap-10 py-6 text-[10px] sm:text-xs tracking-[0.25em] text-ink-dim uppercase z-20">
-        <span className="hover:text-ink-text transition-colors cursor-default">System</span>
-        <span className="text-ink-line">·</span>
-        <span className="hover:text-ink-text transition-colors cursor-default">Secure</span>
-        <span className="text-ink-line">·</span>
-        <span className="hover:text-ink-text transition-colors cursor-default">Automated</span>
-      </nav>
+    <div className="relative min-h-screen flex flex-col items-center justify-center p-6 overflow-hidden">
+      {/* 👇 GIỮ LẠI VIDEO NỀN */}
+      <video 
+        src="https://files.catbox.moe/hdwtfm.mp4" 
+        autoPlay 
+        loop 
+        muted 
+        playsInline
+        className="fixed inset-0 w-full h-full object-cover z-0 opacity-100"
+      />
+      
+      {/* 👇 LỚP PHỦ NHẸ ĐỂ CHỮ DỄ ĐỌC HƠN */}
+      <div className="fixed inset-0 bg-black/20 z-0" />
 
-      <div className="w-full max-w-md animate-slide-up">
-        <div className="text-center mb-12">
-          <div className="flex justify-center mb-6">
-            <Logo size={72} showText={false} />
-          </div>
-          <h1 className="font-serif text-4xl sm:text-5xl text-ink-text mb-3 tracking-wide">
-            Server <em className="italic font-normal">Amplify</em>
-          </h1>
-          <p className="text-ink-muted text-sm italic font-serif max-w-xs mx-auto leading-relaxed">
-            Enter your server identifier to begin the automated boost sequence
-          </p>
-        </div>
+      <div className="relative z-10 w-full flex flex-col items-center justify-center">
+        <nav className="fixed top-0 left-0 right-0 flex items-center justify-center gap-6 sm:gap-10 py-6 text-[10px] sm:text-xs tracking-[0.25em] text-ink-dim uppercase z-20">
+          <span className="hover:text-ink-text transition-colors cursor-default">System</span>
+          <span className="text-ink-line">·</span>
+          <span className="hover:text-ink-text transition-colors cursor-default">Secure</span>
+          <span className="text-ink-line">·</span>
+          <span className="hover:text-ink-text transition-colors cursor-default">Automated</span>
+        </nav>
 
-        <Stepper currentStep={1} />
-
-        <div className="panel panel-hover p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-[11px] uppercase tracking-[0.2em] text-ink-muted mb-3">
-                Server ID
-              </label>
-              <input
-                type="text"
-                value={guildId}
-                onChange={(e) => {
-                  setGuildId(e.target.value.replace(/[^0-9]/g, "").slice(0, 19));
-                  setError("");
-                }}
-                placeholder="000000000000000000"
-                maxLength={19}
-                className="input-elegant w-full rounded-none px-4 py-3.5 font-mono text-sm tracking-wider"
-                disabled={loading || !!guildInfo}
-                inputMode="numeric"
+        <div className="w-full max-w-md animate-slide-up">
+          <div className="text-center mb-12">
+            {/* 👇 ĐÃ XÓA LOGO TĨNH, THAY BẰNG VIDEO */}
+            <div className="flex justify-center mb-6">
+              <video 
+                src="https://files.catbox.moe/hdwtfm.mp4" 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="w-24 h-24 object-cover rounded-full border-2 border-white/30 shadow-lg" 
               />
-              <p className="mt-2 text-[11px] text-ink-dim leading-relaxed">
-                Developer Mode → right-click server → Copy Server ID
-              </p>
             </div>
+            <h1 className="font-serif text-4xl sm:text-5xl text-ink-text mb-3 tracking-wide drop-shadow-lg">
+              Server <em className="italic font-normal">Amplify</em>
+            </h1>
+            <p className="text-ink-muted text-sm italic font-serif max-w-xs mx-auto leading-relaxed drop-shadow-md">
+              Enter your server identifier to begin the automated boost sequence
+            </p>
+          </div>
 
-            {error && (
-              <div className="border-l-2 border-ink-text/40 pl-4 py-1">
-                <p className="text-ink-text/80 text-xs">{error}</p>
+          <Stepper currentStep={1} />
+
+          <div className="panel panel-hover p-8 backdrop-blur-sm bg-black/30">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-[11px] uppercase tracking-[0.2em] text-ink-muted mb-3">
+                  Server ID
+                </label>
+                <input
+                  type="text"
+                  value={guildId}
+                  onChange={(e) => {
+                    setGuildId(e.target.value.replace(/[^0-9]/g, "").slice(0, 19));
+                    setError("");
+                  }}
+                  placeholder="000000000000000000"
+                  maxLength={19}
+                  className="input-elegant w-full rounded-none px-4 py-3.5 font-mono text-sm tracking-wider"
+                  disabled={loading || !!guildInfo}
+                  inputMode="numeric"
+                />
+                <p className="mt-2 text-[11px] text-ink-dim leading-relaxed">
+                  Developer Mode → right-click server → Copy Server ID
+                </p>
               </div>
-            )}
 
-            {guildInfo && (
-              <div
-                className={`border-l-2 pl-4 py-2 animate-fade-in ${
-                  guildInfo.verified ? "border-ink-text" : "border-ink-text/30"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  {guildInfo.icon ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={guildInfo.icon} alt={guildInfo.name} className="w-9 h-9 rounded-full grayscale" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-ink-text/10 flex items-center justify-center text-ink-text font-serif text-sm">
-                      {guildInfo.verified ? guildInfo.name[0] : "?"}
+              {error && (
+                <div className="border-l-2 border-ink-text/40 pl-4 py-1">
+                  <p className="text-ink-text/80 text-xs">{error}</p>
+                </div>
+              )}
+
+              {guildInfo && (
+                <div
+                  className={`border-l-2 pl-4 py-2 animate-fade-in ${
+                    guildInfo.verified ? "border-ink-text" : "border-ink-text/30"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {guildInfo.icon ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={guildInfo.icon} alt={guildInfo.name} className="w-9 h-9 rounded-full grayscale" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-ink-text/10 flex items-center justify-center text-ink-text font-serif text-sm">
+                        {guildInfo.verified ? guildInfo.name[0] : "?"}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-ink-text text-sm font-medium">{guildInfo.name}</p>
+                      {guildInfo.memberCount ? (
+                        <p className="text-ink-dim text-xs">{guildInfo.memberCount.toLocaleString()} members</p>
+                      ) : !guildInfo.verified ? (
+                        <p className="text-ink-dim text-xs">Will confirm once the bot joins</p>
+                      ) : null}
                     </div>
-                  )}
-                  <div>
-                    <p className="text-ink-text text-sm font-medium">{guildInfo.name}</p>
-                    {guildInfo.memberCount ? (
-                      <p className="text-ink-dim text-xs">{guildInfo.memberCount.toLocaleString()} members</p>
-                    ) : !guildInfo.verified ? (
-                      <p className="text-ink-dim text-xs">Will confirm once the bot joins</p>
-                    ) : null}
                   </div>
                 </div>
-              </div>
-            )}
-
-            <div id="geetest-container" className="min-h-[50px]" />
-
-            <button
-              type="submit"
-              disabled={loading || !!guildInfo || guildId.length < 17}
-              className="btn-primary w-full font-medium py-3.5 px-4 text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 mt-2"
-            >
-              {loading ? (
-                <>
-                  <Spinner /> Verifying
-                </>
-              ) : guildInfo ? (
-                "Proceeding"
-              ) : (
-                "Continue"
               )}
-            </button>
-          </form>
 
-          {scriptReady && (
-            <p className="text-center text-[10px] text-ink-dim/50 mt-3">GeeTest ready</p>
-          )}
+              <div id="geetest-container" className="min-h-[50px]" />
+
+              <button
+                type="submit"
+                disabled={loading || !!guildInfo || guildId.length < 17}
+                className="btn-primary w-full font-medium py-3.5 px-4 text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2 mt-2"
+              >
+                {loading ? (
+                  <>
+                    <Spinner /> Verifying
+                  </>
+                ) : guildInfo ? (
+                  "Proceeding"
+                ) : (
+                  "Continue"
+                )}
+              </button>
+            </form>
+
+            {scriptReady && (
+              <p className="text-center text-[10px] text-ink-dim/50 mt-3">GeeTest ready</p>
+            )}
+          </div>
+
+          <p className="text-center text-[10px] tracking-widest text-ink-dim/60 mt-6 uppercase drop-shadow-md">
+            Encrypted session · No data retained
+          </p>
         </div>
-
-        <p className="text-center text-[10px] tracking-widest text-ink-dim/60 mt-6 uppercase">
-          Encrypted session · No data retained
-        </p>
       </div>
     </div>
   );
