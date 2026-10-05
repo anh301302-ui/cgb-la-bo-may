@@ -245,11 +245,14 @@ export default function ResultPage() {
       <div className="w-full max-w-lg animate-slide-up">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-5">
-            {/* 👇 ẢNH LOGO LỚN ĐÃ ĐƯỢC THAY */}
-            <img 
-              src="https://i.pinimg.com/736x/e0/ad/0d/e0ad0db498d84caa49efa7afccd60d3d.jpg" 
-              alt="Logo" 
-              className="w-16 h-16 object-contain rounded-full border border-gray-600" 
+            {/* 👇 ĐÃ THAY LINK CATBOX VÀO LOGO LỚN */}
+            <video 
+              src="https://files.catbox.moe/hdwtfm.mp4" 
+              autoPlay 
+              loop 
+              muted 
+              playsInline
+              className="w-20 h-20 object-contain rounded-full border-2 border-red-500" 
             />
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink-text mb-2 tracking-wide">
