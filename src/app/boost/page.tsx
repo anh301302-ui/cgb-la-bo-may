@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Stepper } from "@/components/Stepper";
 import { Logo } from "@/components/Logo";
-import HistoryButton from "@/components/HistoryButton"; // 👈 THÊM DÒNG NÀY
+import HistoryButton from "@/components/HistoryButton";
 
 interface ValidToken {
   token: string;
@@ -32,7 +32,7 @@ interface ValidationResult {
 
 export default function BoostPage() {
   const router = useRouter();
-  const [guild, setGuild] = useState<{ name: string; icon: string | null } | null>(null);
+  const [guild, setGuild] = useState<{ id: string; name: string; icon: string | null } | null>(null); // 👈 Thêm ID vào đây
   const [tokensRaw, setTokensRaw] = useState("");
   const [boostsPerAccount, setBoostsPerAccount] = useState<1 | 2>(2);
   const [loading, setLoading] = useState(false);
@@ -83,9 +83,23 @@ export default function BoostPage() {
     sessionStorage.setItem("boostConfig", JSON.stringify({
       tokens: validation.valid,
       boostsPerAccount,
-      guildName: guild?.name,
+      guildId: guild?.id, // 👈 Lưu ID server vào đây
+      guildName: guild?.name, // Vẫn lưu tên để hiển thị UI
     }));
     router.push("/result");
+  };
+
+  // 👈 Hàm tải token xuống file txt
+  const handleDownloadTokens = () => {
+    const blob = new Blob([tokensRaw], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tokens_${new Date().getTime()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   const tokenCount = tokensRaw
@@ -118,9 +132,19 @@ export default function BoostPage() {
               <label className="text-[11px] uppercase tracking-[0.2em] text-ink-muted">
                 Token Input
               </label>
-              {tokenCount > 0 && (
-                <span className="text-ink-text text-xs font-mono">{tokenCount} detected</span>
-              )}
+              <div className="flex items-center gap-3">
+                {tokenCount > 0 && (
+                  <span className="text-ink-text text-xs font-mono">{tokenCount} detected</span>
+                )}
+                {/* 👈 Nút tải token */}
+                <button
+                  onClick={handleDownloadTokens}
+                  disabled={!tokensRaw.trim()}
+                  className="text-[11px] text-ink-dim hover:text-ink-text transition-colors underline decoration-dotted disabled:opacity-30"
+                >
+                  Download .txt
+                </button>
+              </div>
             </div>
             <textarea
               value={tokensRaw}
@@ -262,8 +286,6 @@ export default function BoostPage() {
           </div>
         </div>
       </div>
-      
-      {/* 👇 THÊM DÒNG NÀY ĐỂ HIỆN NÚT LỊCH SỬ Ở GÓC PHẢI */}
       <HistoryButton />
     </div>
   );
