@@ -7,17 +7,30 @@ export default function HistoryButton() {
   const [isOpen, setIsOpen] = useState(false);
   const { history, clearHistory } = useHistory();
 
+  const handleClearAll = () => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử? (Lần 1/3)")) {
+      if (window.confirm("Hành động này KHÔNG THỂ hoàn tác! Bạn vẫn muốn tiếp tục? (Lần 2/3)")) {
+        if (window.confirm("XÁC NHẬN LẦN CUỐI: Xóa vĩnh viễn toàn bộ lịch sử? (Lần 3/3)")) {
+          clearHistory();
+          setIsOpen(false);
+        }
+      }
+    }
+  };
+
   return (
     <>
-      {/* Nút bấm ở góc dưới bên phải */}
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gray-800 text-white shadow-lg hover:bg-gray-700 transition-colors border border-gray-600"
         title="Xem lịch sử Boost"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        {/* 👇 THAY LINK ẢNH LOGO MINI CỦA BẠN VÀO ĐÂY */}
+        <img 
+          src="https://i.imgur.com/your-logo.png" 
+          alt="History" 
+          className="w-7 h-7 object-contain"
+        />
         {history.length > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
             {history.length > 99 ? '99+' : history.length}
@@ -25,12 +38,10 @@ export default function HistoryButton() {
         )}
       </button>
 
-      {/* Cửa sổ hiện Lịch sử (Modal) */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
           <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-lg bg-[#1a1a1a] text-gray-200 shadow-xl border border-gray-700">
             
-            {/* Tiêu đề và nút đóng */}
             <div className="flex items-center justify-between border-b border-gray-700 p-4">
               <h2 className="text-lg font-semibold uppercase tracking-wider text-gray-300">Lịch sử Boost</h2>
               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">
@@ -40,7 +51,6 @@ export default function HistoryButton() {
               </button>
             </div>
             
-            {/* Danh sách lịch sử */}
             <div className="overflow-y-auto p-4 flex-1">
               {history.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">Chưa có lịch sử boost nào.</p>
@@ -53,11 +63,10 @@ export default function HistoryButton() {
               )}
             </div>
 
-            {/* Nút xóa lịch sử */}
             {history.length > 0 && (
               <div className="border-t border-gray-700 p-4">
                 <button 
-                  onClick={() => { if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử?')) clearHistory(); }}
+                  onClick={handleClearAll}
                   className="w-full rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
                 >
                   Xóa toàn bộ lịch sử
@@ -71,7 +80,6 @@ export default function HistoryButton() {
   );
 }
 
-// Component hiển thị từng thẻ lịch sử
 function HistoryCard({ item }: { item: HistoryItem }) {
   return (
     <div className="rounded-lg border border-gray-700 bg-[#222] p-4">
@@ -79,7 +87,7 @@ function HistoryCard({ item }: { item: HistoryItem }) {
         <span>Ngày: {item.date}</span>
         <span>Server ID: {item.serverId}</span>
       </div>
-      <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4 mb-4">
         <div className="rounded-md bg-[#2a2a2a] p-2 border border-gray-700">
           <div className="text-xl font-bold text-white">{item.boosts}</div>
           <div className="text-[10px] uppercase text-gray-500 tracking-wider">Boosts</div>
@@ -97,6 +105,20 @@ function HistoryCard({ item }: { item: HistoryItem }) {
           <div className="text-[10px] uppercase text-gray-500 tracking-wider">Failed</div>
         </div>
       </div>
+
+      {/* 👇 HIỂN THỊ DANH SÁCH TOKEN ĐÃ BOOST */}
+      {item.tokens && item.tokens.length > 0 && (
+        <div className="border-t border-gray-700 pt-3">
+          <p className="text-[10px] uppercase text-gray-500 tracking-wider mb-2">Token đã boost:</p>
+          <div className="flex flex-wrap gap-2">
+            {item.tokens.map((token, idx) => (
+              <span key={idx} className="bg-[#2a2a2a] text-gray-300 text-[10px] px-2 py-1 rounded border border-gray-700 font-mono">
+                {token}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
