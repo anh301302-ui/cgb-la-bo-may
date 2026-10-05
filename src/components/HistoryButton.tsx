@@ -25,11 +25,11 @@ export default function HistoryButton() {
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gray-800 text-white shadow-lg hover:bg-gray-700 transition-colors border border-gray-600"
         title="Xem lịch sử Boost"
       >
-        {/* 👇 THAY LINK ẢNH LOGO MINI CỦA BẠN VÀO ĐÂY */}
+        {/* 👇 ĐÃ THAY ẢNH MINI MỚI CỦA BẠN */}
         <img 
-          src="https://i.imgur.com/your-logo.png" 
+          src="https://files.catbox.moe/ofll4p.png" 
           alt="History" 
-          className="w-7 h-7 object-contain"
+          className="w-9 h-9 object-contain rounded-full" 
         />
         {history.length > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
@@ -106,7 +106,6 @@ function HistoryCard({ item }: { item: HistoryItem }) {
         </div>
       </div>
 
-      {/* 👇 HIỂN THỊ DANH SÁCH TOKEN ĐÃ BOOST */}
       {item.tokens && item.tokens.length > 0 && (
         <div className="border-t border-gray-700 pt-3">
           <p className="text-[10px] uppercase text-gray-500 tracking-wider mb-2">Token đã boost:</p>
