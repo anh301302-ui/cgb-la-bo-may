@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Stepper } from "@/components/Stepper";
 import { Logo } from "@/components/Logo";
+import { useHistory } from "@/contexts/HistoryContext"; // 👈 THÊM DÒNG NÀY
 
 interface BoostResult {
   tokenMasked: string;
@@ -39,9 +40,6 @@ interface BoostConfig {
 
 type JobStatus = "idle" | "running" | "complete" | "error";
 
-// Delay between each sequential /api/tokens/boost-one call. Paced entirely
-// client-side so the server never sits idle burning billed function-time —
-// each request only runs as long as the actual Discord API work takes.
 const DELAY_BETWEEN_TOKENS_MS = 7000;
 
 const STATUS_LABELS: Record<string, string> = {
@@ -59,6 +57,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ResultPage() {
   const router = useRouter();
+  const { addHistory } = useHistory(); // 👈 THÊM DÒNG NÀY
   const [status, setStatus] = useState<JobStatus>("idle");
   const [results, setResults] = useState<BoostResult[]>([]);
   const [liveLog, setLiveLog] = useState<LiveLogEntry[]>([]);
@@ -74,13 +73,9 @@ export default function ResultPage() {
   const [guildName, setGuildName] = useState("");
   const [error, setError] = useState("");
   const hasStarted = useRef(false);
-  const stoppedRef = useRef(false); // flips true if the user navigates away mid-run
+  const stoppedRef = useRef(false);
   const logEndRef = useRef<HTMLDivElement>(null);
 
-  // Declared BEFORE the mount effect that invokes them. Previously these
-  // lived below the effect, so the call site referenced a `const` that was
-  // still in its temporal dead zone at module-evaluation order — it only
-  // worked by accident because effects run after the component body.
   const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
   const runSequentially = async (config: BoostConfig) => {
@@ -91,7 +86,7 @@ export default function ResultPage() {
     let totalBoosted = 0;
 
     for (let i = 0; i < config.tokens.length; i++) {
-      if (stoppedRef.current) break; // tab closed / navigated away — stop here
+      if (stoppedRef.current) break;
 
       const t = config.tokens[i];
       setCurrentIndex(i + 1);
@@ -114,8 +109,6 @@ export default function ResultPage() {
 
         if (!res.ok) {
           setError(data.error ?? `Request failed for token ${i + 1}`);
-          // Record as a failed result and continue to the next token rather
-          // than aborting the whole batch on one rate-limit hiccup.
           const failResult: BoostResult = {
             tokenMasked: t.tokenMasked,
             userId: t.userId,
@@ -153,8 +146,6 @@ export default function ResultPage() {
 
       if (stoppedRef.current) break;
 
-      // Client-side pacing — costs nothing server-side, and naturally halts
-      // if the tab is closed since no further fetch will ever be issued.
       if (i < config.tokens.length - 1) {
         await sleep(DELAY_BETWEEN_TOKENS_MS);
       }
@@ -174,6 +165,20 @@ export default function ResultPage() {
       failed,
     });
     setStatus("complete");
+
+    // 👇 ĐOẠN CODE LƯU LỊCH SỬ ĐƯỢC THÊM VÀO ĐÂY 👇
+    const now = new Date();
+    const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+    
+    addHistory({
+      serverId: config.guildName || "Unknown Server", // Dùng tên server làm ID tạm thời
+      boosts: totalBoosted,
+      boosted: boosted,
+      existing: alreadyMember,
+      failed: failed,
+      date: dateStr,
+    });
+    // 👆 KẾT THÚC ĐOẠN LƯU LỊCH SỬ 👆
   };
 
   const appendStages = (
@@ -216,9 +221,6 @@ export default function ResultPage() {
     runSequentially(config);
 
     return () => {
-      // If the component unmounts (user navigates away / closes tab), stop
-      // scheduling further /api/tokens/boost-one calls. Any in-flight call
-      // still completes on the server, but no NEW token will be submitted.
       stoppedRef.current = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -227,7 +229,6 @@ export default function ResultPage() {
   useEffect(() => {
     logEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [liveLog]);
-
 
   const progress = total > 0 ? Math.round((results.length / total) * 100) : 0;
 
@@ -278,7 +279,6 @@ export default function ResultPage() {
             </div>
           )}
 
-          {/* Live real-time log — populated as each sequential call returns */}
           {liveLog.length > 0 && (
             <div className="panel p-7">
               <div className="flex items-center justify-between mb-4">
