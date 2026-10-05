@@ -9,7 +9,7 @@ export interface HistoryItem {
   boosted: number;
   existing: number;
   failed: number;
-  date: string; // Định dạng: HH:mm SA/CH DD/MM/YYYY
+  date: string; 
   tokens: string[]; // 👈 Danh sách token đã boost
 }
 
