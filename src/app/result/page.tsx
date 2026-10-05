@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Stepper } from "@/components/Stepper";
 import { Logo } from "@/components/Logo";
-import { useHistory } from "@/contexts/HistoryContext"; // 👈 THÊM DÒNG NÀY
+import { useHistory } from "@/contexts/HistoryContext";
 
 interface BoostResult {
   tokenMasked: string;
@@ -35,6 +35,7 @@ interface BoostConfig {
     username?: string;
   }>;
   boostsPerAccount: 1 | 2;
+  guildId?: string; // 👈 Thêm ID
   guildName?: string;
 }
 
@@ -57,7 +58,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function ResultPage() {
   const router = useRouter();
-  const { addHistory } = useHistory(); // 👈 THÊM DÒNG NÀY
+  const { addHistory } = useHistory();
   const [status, setStatus] = useState<JobStatus>("idle");
   const [results, setResults] = useState<BoostResult[]>([]);
   const [liveLog, setLiveLog] = useState<LiveLogEntry[]>([]);
@@ -166,19 +167,21 @@ export default function ResultPage() {
     });
     setStatus("complete");
 
-    // 👇 ĐOẠN CODE LƯU LỊCH SỬ ĐƯỢC THÊM VÀO ĐÂY 👇
+    // 👇 LƯU LỊCH SỬ VỚI ID SERVER CHUẨN
     const now = new Date();
     const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
     
+    // Ưu tiên lấy ID, nếu không có mới lấy tên
+    const finalServerId = config.guildId || config.guildName || "Unknown Server";
+
     addHistory({
-      serverId: config.guildName || "Unknown Server", // Dùng tên server làm ID tạm thời
+      serverId: finalServerId,
       boosts: totalBoosted,
       boosted: boosted,
       existing: alreadyMember,
       failed: failed,
       date: dateStr,
     });
-    // 👆 KẾT THÚC ĐOẠN LƯU LỊCH SỬ 👆
   };
 
   const appendStages = (
@@ -223,7 +226,6 @@ export default function ResultPage() {
     return () => {
       stoppedRef.current = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
