@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Stepper } from "@/components/Stepper";
-import { Logo } from "@/components/Logo";
 import { useHistory } from "@/contexts/HistoryContext";
 
 interface BoostResult {
@@ -35,7 +34,7 @@ interface BoostConfig {
     username?: string;
   }>;
   boostsPerAccount: 1 | 2;
-  guildId?: string; // 👈 Thêm ID
+  guildId?: string;
   guildName?: string;
 }
 
@@ -167,11 +166,19 @@ export default function ResultPage() {
     });
     setStatus("complete");
 
-    // 👇 LƯU LỊCH SỬ VỚI ID SERVER CHUẨN
+    // 👇 LƯU LỊCH SỬ VỚI GIỜ/PHÚT/SÁNG CHIỀU VÀ DANH SÁCH TOKEN
     const now = new Date();
-    const dateStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-    
-    // Ưu tiên lấy ID, nếu không có mới lấy tên
+    const hours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'CH' : 'SA'; // CH = Chiều, SA = Sáng
+    const hours12 = hours % 12 || 12;
+    const dateStr = `${hours12}:${minutes} ${ampm} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+    // Lấy danh sách token đã boost thành công
+    const boostedTokens = collected
+      .filter(r => r.boostStatus === 'boosted')
+      .map(r => r.tokenMasked);
+
     const finalServerId = config.guildId || config.guildName || "Unknown Server";
 
     addHistory({
@@ -181,6 +188,7 @@ export default function ResultPage() {
       existing: alreadyMember,
       failed: failed,
       date: dateStr,
+      tokens: boostedTokens, // 👈 Truyền danh sách token vào
     });
   };
 
@@ -239,7 +247,12 @@ export default function ResultPage() {
       <div className="w-full max-w-lg animate-slide-up">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-5">
-            <Logo size={48} showText={false} />
+            {/* 👇 THAY LINK ẢNH LOGO CỦA BẠN VÀO ĐÂY */}
+            <img 
+              src="https://i.imgur.com/your-logo.png" 
+              alt="Logo" 
+              className="w-12 h-12 object-contain"
+            />
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink-text mb-2 tracking-wide">
             {status === "running" && (
