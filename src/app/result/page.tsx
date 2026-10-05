@@ -166,15 +166,13 @@ export default function ResultPage() {
     });
     setStatus("complete");
 
-    // 👇 LƯU LỊCH SỬ VỚI GIỜ/PHÚT/SÁNG CHIỀU VÀ DANH SÁCH TOKEN
     const now = new Date();
     const hours = now.getHours();
     const minutes = String(now.getMinutes()).padStart(2, '0');
-    const ampm = hours >= 12 ? 'CH' : 'SA'; // CH = Chiều, SA = Sáng
+    const ampm = hours >= 12 ? 'CH' : 'SA'; 
     const hours12 = hours % 12 || 12;
     const dateStr = `${hours12}:${minutes} ${ampm} ${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
 
-    // Lấy danh sách token đã boost thành công
     const boostedTokens = collected
       .filter(r => r.boostStatus === 'boosted')
       .map(r => r.tokenMasked);
@@ -188,7 +186,7 @@ export default function ResultPage() {
       existing: alreadyMember,
       failed: failed,
       date: dateStr,
-      tokens: boostedTokens, // 👈 Truyền danh sách token vào
+      tokens: boostedTokens,
     });
   };
 
@@ -247,11 +245,11 @@ export default function ResultPage() {
       <div className="w-full max-w-lg animate-slide-up">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-5">
-            {/* 👇 THAY LINK ẢNH LOGO CỦA BẠN VÀO ĐÂY */}
+            {/* 👇 ẢNH LOGO LỚN ĐÃ ĐƯỢC THAY */}
             <img 
-              src="https://i.imgur.com/your-logo.png" 
+              src="https://i.pinimg.com/736x/e0/ad/0d/e0ad0db498d84caa49efa7afccd60d3d.jpg" 
               alt="Logo" 
-              className="w-12 h-12 object-contain"
+              className="w-16 h-16 object-contain rounded-full border border-gray-600" 
             />
           </div>
           <h1 className="font-serif text-3xl sm:text-4xl text-ink-text mb-2 tracking-wide">
