@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Stepper } from "@/components/Stepper";
-import { Logo } from "@/components/Logo";
 import HistoryButton from "@/components/HistoryButton";
 
 interface ValidToken {
@@ -32,7 +31,7 @@ interface ValidationResult {
 
 export default function BoostPage() {
   const router = useRouter();
-  const [guild, setGuild] = useState<{ id: string; name: string; icon: string | null } | null>(null); // 👈 Thêm ID vào đây
+  const [guild, setGuild] = useState<{ id: string; name: string; icon: string | null } | null>(null);
   const [tokensRaw, setTokensRaw] = useState("");
   const [boostsPerAccount, setBoostsPerAccount] = useState<1 | 2>(2);
   const [loading, setLoading] = useState(false);
@@ -83,13 +82,12 @@ export default function BoostPage() {
     sessionStorage.setItem("boostConfig", JSON.stringify({
       tokens: validation.valid,
       boostsPerAccount,
-      guildId: guild?.id, // 👈 Lưu ID server vào đây
-      guildName: guild?.name, // Vẫn lưu tên để hiển thị UI
+      guildId: guild?.id,
+      guildName: guild?.name,
     }));
     router.push("/result");
   };
 
-  // 👈 Hàm tải token xuống file txt
   const handleDownloadTokens = () => {
     const blob = new Blob([tokensRaw], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -111,14 +109,19 @@ export default function BoostPage() {
     <div className="min-h-screen flex flex-col items-center justify-start p-6 pt-14 pb-16">
       <div className="w-full max-w-lg animate-slide-up">
         <div className="text-center mb-10">
+          {/* 👇 ĐÃ THAY LOGO BẰNG ẢNH MỚI */}
           <div className="flex justify-center mb-5">
-            <Logo size={48} showText={false} />
+            <img 
+              src="https://files.catbox.moe/0wx2ee.jpg" 
+              alt="Logo" 
+              className="w-16 h-16 object-cover rounded-full border-2 border-white/30 shadow-lg" 
+            />
           </div>
-          <h1 className="font-serif text-3xl sm:text-4xl text-ink-text mb-2 tracking-wide">
+          <h1 className="font-serif text-3xl sm:text-4xl text-ink-text mb-2 tracking-wide drop-shadow-lg">
             Token <em className="italic font-normal">Configuration</em>
           </h1>
           {guild && (
-            <p className="text-ink-muted text-sm italic font-serif">
+            <p className="text-ink-muted text-sm italic font-serif drop-shadow-md">
               target: <span className="text-ink-text not-italic">{guild.name}</span>
             </p>
           )}
@@ -127,16 +130,11 @@ export default function BoostPage() {
         <Stepper currentStep={3} />
 
         <div className="space-y-5">
-          <div className="panel p-7">
+          <div className="panel p-7 backdrop-blur-sm bg-black/30">
             <div className="flex items-center justify-between mb-3">
-              <label className="text-[11px] uppercase tracking-[0.2em] text-ink-muted">
-                Token Input
-              </label>
+              <label className="text-[11px] uppercase tracking-[0.2em] text-ink-muted">Token Input</label>
               <div className="flex items-center gap-3">
-                {tokenCount > 0 && (
-                  <span className="text-ink-text text-xs font-mono">{tokenCount} detected</span>
-                )}
-                {/* 👈 Nút tải token */}
+                {tokenCount > 0 && <span className="text-ink-text text-xs font-mono">{tokenCount} detected</span>}
                 <button
                   onClick={handleDownloadTokens}
                   disabled={!tokensRaw.trim()}
@@ -161,53 +159,36 @@ export default function BoostPage() {
             <p className="text-[11px] text-ink-dim mt-2">One token per line · Maximum 8</p>
           </div>
 
-          <div className="panel p-7">
-            <label className="block text-[11px] uppercase tracking-[0.2em] text-ink-muted mb-4">
-              Boosts per Account
-            </label>
+          <div className="panel p-7 backdrop-blur-sm bg-black/30">
+            <label className="block text-[11px] uppercase tracking-[0.2em] text-ink-muted mb-4">Boosts per Account</label>
             <div className="grid grid-cols-2 gap-3">
               {([1, 2] as const).map((n) => (
                 <button
                   key={n}
                   onClick={() => setBoostsPerAccount(n)}
-                  className={`
-                    p-5 border text-left transition-all duration-300
-                    ${
-                      boostsPerAccount === n
-                        ? "border-ink-text bg-ink-text/[0.04]"
-                        : "border-ink-line hover:border-ink-line2"
-                    }
-                  `}
+                  className={`p-5 border text-left transition-all duration-300 ${
+                    boostsPerAccount === n ? "border-ink-text bg-ink-text/[0.04]" : "border-ink-line hover:border-ink-line2"
+                  }`}
                 >
                   <div className="font-serif text-2xl text-ink-text mb-1">{n}×</div>
-                  <div className="text-ink-text text-xs uppercase tracking-wide">
-                    Boost{n > 1 ? "s" : ""}
-                  </div>
-                  <div className="text-ink-dim text-[11px] mt-1">
-                    {n === 1 ? "single slot" : "both slots"}
-                  </div>
+                  <div className="text-ink-text text-xs uppercase tracking-wide">Boost{n > 1 ? "s" : ""}</div>
+                  <div className="text-ink-dim text-[11px] mt-1">{n === 1 ? "single slot" : "both slots"}</div>
                 </button>
               ))}
             </div>
           </div>
 
-          {error && (
-            <div className="border-l-2 border-ink-text/40 pl-4 py-1">
-              <p className="text-ink-text/80 text-xs">{error}</p>
-            </div>
-          )}
+          {error && <div className="border-l-2 border-ink-text/40 pl-4 py-1"><p className="text-ink-text/80 text-xs">{error}</p></div>}
 
           {validation && (
-            <div className="panel p-7 space-y-5 animate-fade-in">
+            <div className="panel p-7 space-y-5 animate-fade-in backdrop-blur-sm bg-black/30">
               <p className="text-[11px] uppercase tracking-[0.2em] text-ink-muted">Validation Report</p>
-
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatCard label="Ready" value={validation.summary.validWithBoosts} />
                 <StatCard label="Boost Slots" value={validation.summary.totalAvailableBoosts} />
                 <StatCard label="No Boosts" value={validation.summary.validNoBoosts} dim />
                 <StatCard label="Invalid" value={validation.summary.invalid} dim />
               </div>
-
               {validation.valid.length > 0 && (
                 <div>
                   <div className="fade-line mb-4" />
@@ -232,13 +213,6 @@ export default function BoostPage() {
                   </div>
                 </div>
               )}
-
-              {validation.summary.validWithBoosts === 0 && (
-                <div className="text-center py-4">
-                  <p className="text-ink-muted text-sm">No eligible tokens found</p>
-                  <p className="text-ink-dim text-xs mt-1">Tokens must have active Nitro with unused boost slots</p>
-                </div>
-              )}
             </div>
           )}
 
@@ -249,21 +223,12 @@ export default function BoostPage() {
                 disabled={validating || tokenCount === 0}
                 className="btn-primary flex-1 font-medium py-3.5 px-4 text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2"
               >
-                {validating ? (
-                  <>
-                    <Spinner /> Validating
-                  </>
-                ) : (
-                  "Validate Tokens"
-                )}
+                {validating ? <><Spinner /> Validating</> : "Validate Tokens"}
               </button>
             ) : (
               <>
                 <button
-                  onClick={() => {
-                    setValidation(null);
-                    setError("");
-                  }}
+                  onClick={() => { setValidation(null); setError(""); }}
                   className="btn-outline sm:flex-none px-6 py-3.5 text-xs uppercase tracking-[0.2em]"
                 >
                   Re-check
@@ -273,13 +238,7 @@ export default function BoostPage() {
                   disabled={loading || validation.summary.validWithBoosts === 0}
                   className="btn-primary flex-1 font-medium py-3.5 px-4 text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-2"
                 >
-                  {loading ? (
-                    <>
-                      <Spinner /> Starting
-                    </>
-                  ) : (
-                    `Begin Boost — ${validation.summary.validWithBoosts} accounts`
-                  )}
+                  {loading ? <><Spinner /> Starting</> : `Begin Boost — ${validation.summary.validWithBoosts} accounts`}
                 </button>
               </>
             )}
