@@ -1,0 +1,105 @@
+// components/HistoryButton.tsx
+"use client";
+
+import { useState } from 'react';
+import { useHistory, HistoryItem } from '@/contexts/HistoryContext';
+
+export default function HistoryButton() {
+  const [isOpen, setIsOpen] = useState(false);
+  const { history, clearHistory } = useHistory();
+
+  return (
+    <>
+      {/* Nút bấm ở góc dưới bên phải */}
+      <button
+        onClick={() => setIsOpen(true)}
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gray-800 text-white shadow-lg hover:bg-gray-700 transition-colors border border-gray-600"
+        title="Xem lịch sử Boost"
+      >
+        {/* Icon đồng hồ lịch sử */}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {/* Badge đếm số lượng lịch sử */}
+        {history.length > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+            {history.length > 99 ? '99+' : history.length}
+          </span>
+        )}
+      </button>
+
+      {/* Cửa sổ hiện lịch sử (Modal) */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
+          <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-lg bg-[#1a1a1a] text-gray-200 shadow-xl border border-gray-700">
+            
+            {/* Tiêu đề và nút đóng */}
+            <div className="flex items-center justify-between border-b border-gray-700 p-4">
+              <h2 className="text-lg font-semibold uppercase tracking-wider text-gray-300">Lịch sử Boost</h2>
+              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Danh sách lịch sử */}
+            <div className="overflow-y-auto p-4 flex-1">
+              {history.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">Chưa có lịch sử boost nào.</p>
+              ) : (
+                <div className="space-y-4">
+                  {history.map((item) => (
+                    <HistoryCard key={item.id} item={item} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Nút xóa lịch sử */}
+            {history.length > 0 && (
+              <div className="border-t border-gray-700 p-4">
+                <button 
+                  onClick={() => { if (window.confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử?')) clearHistory(); }}
+                  className="w-full rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors"
+                >
+                  Xóa toàn bộ lịch sử
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// Component hiển thị từng thẻ lịch sử (dựa theo ảnh của bạn)
+function HistoryCard({ item }: { item: HistoryItem }) {
+  return (
+    <div className="rounded-lg border border-gray-700 bg-[#222] p-4">
+      <div className="mb-3 flex items-center justify-between text-xs text-gray-400">
+        <span>Ngày: {item.date}</span>
+        <span>Server ID: {item.serverId}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
+        <div className="rounded-md bg-[#2a2a2a] p-2 border border-gray-700">
+          <div className="text-xl font-bold text-white">{item.boosts}</div>
+          <div className="text-[10px] uppercase text-gray-500 tracking-wider">Boosts</div>
+        </div>
+        <div className="rounded-md bg-[#2a2a2a] p-2 border border-gray-700">
+          <div className="text-xl font-bold text-white">{item.boosted}</div>
+          <div className="text-[10px] uppercase text-gray-500 tracking-wider">Boosted</div>
+        </div>
+        <div className="rounded-md bg-[#2a2a2a] p-2 border border-gray-700">
+          <div className="text-xl font-bold text-white">{item.existing}</div>
+          <div className="text-[10px] uppercase text-gray-500 tracking-wider">Existing</div>
+        </div>
+        <div className="rounded-md bg-[#2a2a2a] p-2 border border-gray-700">
+          <div className="text-xl font-bold text-white">{item.failed}</div>
+          <div className="text-[10px] uppercase text-gray-500 tracking-wider">Failed</div>
+        </div>
+      </div>
+    </div>
+  );
+}
