@@ -3,7 +3,6 @@
 import { useRef, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Stepper } from "@/components/Stepper";
-import { Logo } from "@/components/Logo";
 
 interface GuildInfo {
   id: string;
@@ -197,8 +196,13 @@ export default function HomePage() {
 
       <div className="w-full max-w-md animate-slide-up">
         <div className="text-center mb-12">
+          {/* 👇 ĐÃ THAY LOGO BẰNG ẢNH MỚI */}
           <div className="flex justify-center mb-6">
-            <Logo size={72} showText={false} />
+            <img 
+              src="https://files.catbox.moe/0wx2ee.jpg" 
+              alt="Logo" 
+              className="w-24 h-24 object-cover rounded-full border-2 border-white/30 shadow-lg" 
+            />
           </div>
           <h1 className="font-serif text-4xl sm:text-5xl text-ink-text mb-3 tracking-wide drop-shadow-lg">
             Server <em className="italic font-normal">Amplify</em>
