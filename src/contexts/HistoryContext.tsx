@@ -1,9 +1,7 @@
-// src/contexts/HistoryContext.tsx
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-// Định nghĩa cấu trúc của một mục lịch sử
 export interface HistoryItem {
   id: string;
   serverId: string;
@@ -11,7 +9,8 @@ export interface HistoryItem {
   boosted: number;
   existing: number;
   failed: number;
-  date: string;
+  date: string; // Định dạng: HH:mm SA/CH DD/MM/YYYY
+  tokens: string[]; // 👈 Danh sách token đã boost
 }
 
 interface HistoryContextType {
@@ -23,12 +22,11 @@ interface HistoryContextType {
 const HistoryContext = createContext<HistoryContextType | undefined>(undefined);
 
 const HISTORY_KEY = 'boost_history';
-const MAX_HISTORY_ITEMS = 500; // Giới hạn tối đa 500 mục lịch sử
+const MAX_HISTORY_ITEMS = 500;
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
   const [history, setHistory] = useState<HistoryItem[]>([]);
 
-  // Tải lịch sử từ localStorage khi component được mount
   useEffect(() => {
     try {
       const savedHistory = localStorage.getItem(HISTORY_KEY);
@@ -40,7 +38,6 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Hàm thêm một mục lịch sử mới
   const addHistory = (item: Omit<HistoryItem, 'id'>) => {
     const newItem: HistoryItem = {
       ...item,
@@ -61,7 +58,6 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  // Hàm xóa toàn bộ lịch sử
   const clearHistory = () => {
     setHistory([]);
     try {
@@ -78,7 +74,6 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Hook để sử dụng HistoryContext
 export function useHistory() {
   const context = useContext(HistoryContext);
   if (context === undefined) {
