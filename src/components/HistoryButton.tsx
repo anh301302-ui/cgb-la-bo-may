@@ -25,11 +25,12 @@ export default function HistoryButton() {
         )}
       </button>
 
-      {/* Modal Lịch sử */}
+      {/* Cửa sổ hiện Lịch sử (Modal) */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
           <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-lg bg-[#1a1a1a] text-gray-200 shadow-xl border border-gray-700">
             
+            {/* Tiêu đề và nút đóng */}
             <div className="flex items-center justify-between border-b border-gray-700 p-4">
               <h2 className="text-lg font-semibold uppercase tracking-wider text-gray-300">Lịch sử Boost</h2>
               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">
@@ -39,6 +40,7 @@ export default function HistoryButton() {
               </button>
             </div>
             
+            {/* Danh sách lịch sử */}
             <div className="overflow-y-auto p-4 flex-1">
               {history.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">Chưa có lịch sử boost nào.</p>
@@ -51,6 +53,7 @@ export default function HistoryButton() {
               )}
             </div>
 
+            {/* Nút xóa lịch sử */}
             {history.length > 0 && (
               <div className="border-t border-gray-700 p-4">
                 <button 
@@ -68,6 +71,7 @@ export default function HistoryButton() {
   );
 }
 
+// Component hiển thị từng thẻ lịch sử
 function HistoryCard({ item }: { item: HistoryItem }) {
   return (
     <div className="rounded-lg border border-gray-700 bg-[#222] p-4">
