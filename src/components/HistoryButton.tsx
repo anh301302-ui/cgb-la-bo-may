@@ -1,4 +1,3 @@
-// components/HistoryButton.tsx
 "use client";
 
 import { useState } from 'react';
@@ -16,11 +15,9 @@ export default function HistoryButton() {
         className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gray-800 text-white shadow-lg hover:bg-gray-700 transition-colors border border-gray-600"
         title="Xem lịch sử Boost"
       >
-        {/* Icon đồng hồ lịch sử */}
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        {/* Badge đếm số lượng lịch sử */}
         {history.length > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
             {history.length > 99 ? '99+' : history.length}
@@ -28,12 +25,11 @@ export default function HistoryButton() {
         )}
       </button>
 
-      {/* Cửa sổ hiện lịch sử (Modal) */}
+      {/* Modal Lịch sử */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4">
           <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-lg bg-[#1a1a1a] text-gray-200 shadow-xl border border-gray-700">
             
-            {/* Tiêu đề và nút đóng */}
             <div className="flex items-center justify-between border-b border-gray-700 p-4">
               <h2 className="text-lg font-semibold uppercase tracking-wider text-gray-300">Lịch sử Boost</h2>
               <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white">
@@ -43,7 +39,6 @@ export default function HistoryButton() {
               </button>
             </div>
             
-            {/* Danh sách lịch sử */}
             <div className="overflow-y-auto p-4 flex-1">
               {history.length === 0 ? (
                 <p className="text-center text-gray-500 py-8">Chưa có lịch sử boost nào.</p>
@@ -56,7 +51,6 @@ export default function HistoryButton() {
               )}
             </div>
 
-            {/* Nút xóa lịch sử */}
             {history.length > 0 && (
               <div className="border-t border-gray-700 p-4">
                 <button 
@@ -74,7 +68,6 @@ export default function HistoryButton() {
   );
 }
 
-// Component hiển thị từng thẻ lịch sử (dựa theo ảnh của bạn)
 function HistoryCard({ item }: { item: HistoryItem }) {
   return (
     <div className="rounded-lg border border-gray-700 bg-[#222] p-4">
