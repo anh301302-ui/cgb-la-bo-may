@@ -1,18 +1,6 @@
-import type { Metadata } from "next";
-import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "BOOST — Server Amplification System",
-  description: "Automated server boost management",
-  robots: "noindex, nofollow",
-  icons: {
-    icon: [
-      { url: "/icon.png", type: "image/png" },
-      { url: "/favicon.ico", sizes: "any" },
-    ],
-    apple: "/apple-icon.png",
-  },
-};
+// app/layout.tsx
+import { HistoryProvider } from '@/contexts/HistoryContext'; // 1. Import cái hộp vào
+import HistoryButton from '@/components/HistoryButton'; // 2. Import nút lịch sử (để hiện ở góc phải)
 
 export default function RootLayout({
   children,
@@ -20,12 +8,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-ink-bg vignette">
-        <div className="grain" />
-        <main className="relative z-10">
+    <html lang="vi">
+      <body>
+        {/* 3. Bọc toàn bộ children (các trang web của bạn) bằng HistoryProvider */}
+        <HistoryProvider>
           {children}
-        </main>
+          
+          {/* Đặt nút Lịch sử ở đây để nó hiện ở mọi trang */}
+          <HistoryButton />
+        </HistoryProvider>
       </body>
     </html>
   );
