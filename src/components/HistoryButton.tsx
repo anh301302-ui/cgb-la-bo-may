@@ -20,17 +20,19 @@ export default function HistoryButton() {
 
   return (
     <>
-      {/* 👇 NÚT 3 CHẤM Ở GÓC TRÊN BÊN PHẢI */}
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed top-6 right-6 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/80 text-white shadow-lg hover:bg-gray-700 transition-colors border border-gray-600 backdrop-blur-sm"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gray-800 text-white shadow-lg hover:bg-gray-700 transition-colors border border-gray-600"
         title="Xem lịch sử Boost"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-        </svg>
+        {/* 👇 ĐÃ THAY LOGO MINI THÀNH HÌNH TRÒN */}
+        <img 
+          src="https://files.catbox.moe/0wx2ee.jpg" 
+          alt="History" 
+          className="w-9 h-9 object-cover rounded-full" 
+        />
         {history.length > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+          <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
             {history.length > 99 ? '99+' : history.length}
           </span>
         )}
