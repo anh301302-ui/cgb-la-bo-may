@@ -2,6 +2,15 @@ import "./globals.css";
 import { HistoryProvider } from '@/contexts/HistoryContext';
 import HistoryButton from '@/components/HistoryButton';
 
+// 👇 CẤU HÌNH LOGO TAB TRÌNH DUYỆT (FAVICON)
+export const metadata = {
+  title: 'CGB La Bo May',
+  description: 'Automated Boost System',
+  icons: {
+    icon: 'https://files.catbox.moe/0wx2ee.jpg', // Link ảnh của bạn
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -11,19 +20,14 @@ export default function RootLayout({
     <html lang="vi">
       <body>
         <HistoryProvider>
-          {/* 👇 VIDEO NỀN CHUNG CHO TOÀN BỘ WEB */}
-          <video 
-            src="https://files.catbox.moe/hdwtfm.mp4" 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="fixed inset-0 w-full h-full object-cover z-0 opacity-100"
-          />
-          <div className="fixed inset-0 bg-black/20 z-0" />
+          {/* 👇 THÊM NHẠC NỀN Ở ĐÂY */}
+          <audio autoPlay loop className="hidden">
+            {/* Thay link MP3 của bạn vào đây */}
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg" />
+            Trình duyệt của bạn không hỗ trợ thẻ audio.
+          </audio>
 
-          {/* NỘI DUNG CÁC TRANG */}
-          <div className="relative z-10">{children}</div>
+          {children}
           
           <HistoryButton />
         </HistoryProvider>
